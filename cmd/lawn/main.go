@@ -25,6 +25,10 @@ var (
 )
 
 func main() {
+	if username == "" {
+		log.Fatalln("GITHUB_USERNAME env is required")
+	}
+
 	if maxAge == "" {
 		maxAge = defaultMaxAge
 	}
