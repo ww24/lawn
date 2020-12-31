@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/net/html"
@@ -14,6 +15,7 @@ import (
 
 const (
 	endpointFmt = "https://github.com/users/%s/contributions"
+	className   = "js-calendar-graph-svg"
 )
 
 // Client represents GitHub contributions graph scraper client.
@@ -74,7 +76,7 @@ func (c *Client) parse(w io.Writer, r io.Reader) error {
 }
 
 func (c *Client) parser(n *html.Node) (*html.Node, bool) {
-	if n.Type == html.ElementNode && n.Data == "svg" {
+	if n.Type == html.ElementNode && n.DataAtom == atom.Svg && c.hasClass(n.Attr, className) {
 		return n, true
 	}
 	for ch := n.FirstChild; ch != nil; ch = ch.NextSibling {
@@ -83,6 +85,18 @@ func (c *Client) parser(n *html.Node) (*html.Node, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (c *Client) hasClass(attrs []html.Attribute, class string) bool {
+	for _, attr := range attrs {
+		if attr.Key != "class" {
+			continue
+		}
+
+		return strings.Contains(attr.Val, class)
+	}
+
+	return false
 }
 
 func (c *Client) formatSVG(svg *html.Node) *html.Node {
@@ -141,6 +155,18 @@ func (c *Client) formatSVG(svg *html.Node) *html.Node {
 		Data: `<![CDATA[
 text.month { font-size: 10px; fill: #767676 }
 text.wday { font-size: 9px; fill: #767676 }
+svg {
+	--color-calendar-graph-day-bg:#ebedf0;
+	--color-calendar-graph-day-border:rgba(27,31,35,0.06);
+	--color-calendar-graph-day-L1-bg:#9be9a8;
+	--color-calendar-graph-day-L2-bg:#40c463;
+	--color-calendar-graph-day-L3-bg:#30a14e;
+	--color-calendar-graph-day-L4-bg:#216e39;
+	--color-calendar-graph-day-L4-border:rgba(27,31,35,0.06);
+	--color-calendar-graph-day-L3-border:rgba(27,31,35,0.06);
+	--color-calendar-graph-day-L2-border:rgba(27,31,35,0.06);
+	--color-calendar-graph-day-L1-border:rgba(27,31,35,0.06);
+}
 ]]>`,
 	})
 	return doc
