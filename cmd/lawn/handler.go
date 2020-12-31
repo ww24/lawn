@@ -62,6 +62,7 @@ func (h *handler) handler() http.Handler {
 		ctx := r.Context()
 		if err := h.cli.Fetch(ctx, w, username); err != nil {
 			h.sendError(w, http.StatusInternalServerError)
+			log.Printf("Error: %v", err)
 			return
 		}
 	})
