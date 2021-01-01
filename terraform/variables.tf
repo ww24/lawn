@@ -12,6 +12,10 @@ variable "name" {
   default = "lawn"
 }
 
+variable "image" {
+  default = "ghcr.io/ww24/lawn"
+}
+
 // Email address of the IAM service account associated with the revision of the
 // service. The service account represents the identity of the running revision,
 // and determines what permissions the revision has. If not provided, the
