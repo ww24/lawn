@@ -8,7 +8,7 @@ resource "google_cloud_run_service" "lawn" {
       service_account_name = var.service_account
 
       containers {
-        image = data.google_container_registry_image.lawn.image_url
+        image = "ghcr.io/ww24/lawn"
 
         resources {
           limits = {
@@ -40,13 +40,6 @@ resource "google_cloud_run_service" "lawn" {
     percent         = 100
     latest_revision = true
   }
-}
-
-data "google_container_registry_image" "lawn" {
-  name    = var.name
-  project = var.project
-  region  = var.gcr_region
-  tag     = var.image_tag
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {

@@ -5,7 +5,6 @@ PROJECT_ID ?=
 SERVICE_ACCOUNT ?=
 GITHUB_USERNAME ?=
 IMAGE_TAG ?= "latest"
-IMAGE := asia.gcr.io/${PROJECT_ID}/${NAME}:${IMAGE_TAG}
 
 .PHONY: terraform/terraform.tf
 terraform/terraform.tf:
@@ -44,11 +43,3 @@ enable:
 .PHONY: run
 run:
 	go run ./cmd/lawn
-
-.PHONY: build
-build:
-	docker build -t ${IMAGE} .
-
-.PHONY: push
-push:
-	docker push ${IMAGE}
