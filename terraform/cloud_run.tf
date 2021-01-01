@@ -1,6 +1,6 @@
 resource "google_cloud_run_service" "lawn" {
   name     = var.name
-  location = var.region
+  location = var.location
   project  = var.project
 
   template {
@@ -8,7 +8,7 @@ resource "google_cloud_run_service" "lawn" {
       service_account_name = var.service_account
 
       containers {
-        image = "ghcr.io/ww24/lawn"
+        image = "${var.location}-docker.pkg.dev/${var.project}/${var.gar_repository}/${var.image_name}:${var.image_tag}"
 
         resources {
           limits = {
@@ -43,9 +43,9 @@ resource "google_cloud_run_service" "lawn" {
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {
-  location    = google_cloud_run_service.lawn.location
-  project     = google_cloud_run_service.lawn.project
-  service     = google_cloud_run_service.lawn.name
+  location = google_cloud_run_service.lawn.location
+  project  = google_cloud_run_service.lawn.project
+  service  = google_cloud_run_service.lawn.name
 
   policy_data = data.google_iam_policy.noauth.policy_data
 }

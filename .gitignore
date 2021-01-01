@@ -4,5 +4,4 @@
 !.dockerignore
 
 service_account.json
-terraform.tf
 *.tfvars
