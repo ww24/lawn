@@ -1,5 +1,7 @@
-lawn
-===
+# lawn
+
+[![Go Reference][go-dev-img]][go-dev-url]
+![test-and-build][github-actions-img]
 
 GitHub Contributions Graph scraper.
 
@@ -14,39 +16,15 @@ GitHub Contributions Graph scraper.
 go get github.com/ww24/lawn
 ```
 
-## Configure
+## Configurations
 
-Some environment variables are required.
-
-- Set GCP `PROJECT_ID`.
-- Set `GITHUB_USERNAME`.
-
-## Build
-
-Build docker image.
-
-```bash
-make build
-```
-
-## Deploy
-
-Push docker image to GCR.
-
-```bash
-make push
-```
-
-### Terraform
-
-Deploy to Cloud Run.
-
-1. Create backend backet on GCS and set `BACKEND_BUCKET` environment variable.
-1. `make init`
-1. `make plan`
-1. `make apply`
+- Set your GitHub Username as `GITHUB_USERNAME`.
 
 ## Use by Firebase Hosting
 
 - https://firebase.google.com/docs/hosting/manage-cache
 - https://firebase.google.com/docs/hosting/cloud-run
+
+[github-actions-img]: https://github.com/ww24/lawn/workflows/test-and-build/badge.svg?branch=master
+[go-dev-img]: https://pkg.go.dev/badge/github.com/ww24/lawn.svg
+[go-dev-url]: https://pkg.go.dev/github.com/ww24/lawn

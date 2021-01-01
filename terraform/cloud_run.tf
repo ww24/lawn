@@ -1,6 +1,17 @@
+data "google_cloud_run_service" "lawn" {
+  name     = var.name
+  location = var.location
+}
+
+locals {
+  current_image = data.google_cloud_run_service.lawn.template != null ? data.google_cloud_run_service.lawn.template[0].spec[0].containers[0].image : null
+  new_image     = "${var.location}-docker.pkg.dev/${var.project}/${var.gar_repository}/${var.image_name}:${var.image_tag}"
+  image         = (local.current_image != null && var.image_tag == "latest") ? local.current_image : local.new_image
+}
+
 resource "google_cloud_run_service" "lawn" {
   name     = var.name
-  location = var.region
+  location = var.location
   project  = var.project
 
   template {
@@ -8,7 +19,7 @@ resource "google_cloud_run_service" "lawn" {
       service_account_name = var.service_account
 
       containers {
-        image = "ghcr.io/ww24/lawn"
+        image = local.image
 
         resources {
           limits = {
@@ -40,12 +51,18 @@ resource "google_cloud_run_service" "lawn" {
     percent         = 100
     latest_revision = true
   }
+
+  lifecycle {
+    ignore_changes = [
+
+    ]
+  }
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {
-  location    = google_cloud_run_service.lawn.location
-  project     = google_cloud_run_service.lawn.project
-  service     = google_cloud_run_service.lawn.name
+  location = google_cloud_run_service.lawn.location
+  project  = google_cloud_run_service.lawn.project
+  service  = google_cloud_run_service.lawn.name
 
   policy_data = data.google_iam_policy.noauth.policy_data
 }
