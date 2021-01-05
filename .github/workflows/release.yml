@@ -1,16 +1,14 @@
-name: test-and-build
+name: release
 
 on:
   push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
 
 env:
+  GAR_REPOSITORY: ww24
   IMAGE_NAME: lawn
-  IMAGE_TAG: latest
+  GCP_LOCATION: asia-northeast1
 
 jobs:
   lint:
@@ -42,6 +40,8 @@ jobs:
 
   docker_build:
     name: Build docker image
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -78,9 +78,16 @@ jobs:
         uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: trivy-results.sarif
+      - name: Output image tag
+        id: tag
+        run: |
+          tag=$(echo "${GITHUB_REF}" | sed "s/^refs\/tags\/v//")
+          if [ -z "$tag" ]; then
+            exit 1
+          fi
+          echo "::set-output name=image_tag::$tag"
 
   docker_push:
-    if: github.event_name == 'push'
     needs: [lint, test, docker_build]
     name: Build and push docker image
     runs-on: ubuntu-latest
@@ -92,15 +99,15 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v1
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
-      - name: Setup docker buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Build and push docker image
+      - name: Build and push docker image (ghcr.io)
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -109,10 +116,42 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.docker_build.outputs.image_tag }}
 
-  terraform:
-    name: Terraform
+  docker_push_gar:
+    needs: [lint, test, docker_build]
+    name: Build and push docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to Google Artifact Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCP_LOCATION }}-docker.pkg.dev
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+      - name: Build and push docker image (${{ env.GCP_LOCATION }}-docker.pkg.dev)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          push: true
+          tags: |
+            ${{ env.GCP_LOCATION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.docker_build.outputs.image_tag }}
+
+  release:
+    name: Release
+    needs: [docker_build, docker_push_gar]
     defaults:
       run:
         working-directory: terraform
@@ -123,15 +162,13 @@ jobs:
         with:
           terraform_version: 0.14.3
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-      - name: Fmt
-        run: terraform fmt -check
+      - name: Set image_tag
+        run: |
+          echo 'image_tag = "${{ needs.docker_build.outputs.image_tag }}"' \
+            >> image_tag.auto.tfvars
       - name: Init
         run: terraform init
       - name: Validate
         run: terraform validate -no-color
-      - name: Plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -no-color
       - name: Apply
-        if: github.event_name == 'push'
-        run: terraform plan -no-color
+        run: terraform apply -no-color

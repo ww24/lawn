@@ -1,9 +1,0 @@
-terraform {
-  required_version = "~> 0.12.24"
-
-  backend "gcs" {
-    # credentials = "../service_account.json"
-    bucket      = "${BUCKET}"
-    prefix      = "${PREFIX}"
-  }
-}

@@ -1,33 +1,47 @@
-variable "region" {
+variable "location" {
+  type    = string
   default = "asia-northeast1"
 }
 
-variable "gcr_region" {
-  default = "asia"
+variable "project" {
+  type = string
 }
 
-variable "project" {}
+// credentials json value
+variable "google_credentials" {
+  type = string
+}
 
 variable "name" {
+  type    = string
   default = "lawn"
 }
 
-variable "image" {
-  default = "ghcr.io/ww24/lawn"
+variable "gar_repository" {
+  type    = string
+  default = "ww24"
 }
 
-// Email address of the IAM service account associated with the revision of the
-// service. The service account represents the identity of the running revision,
-// and determines what permissions the revision has. If not provided, the
-// revision will use the project's default service account.
-variable "service_account" {}
-
-variable "github_username" {}
-
-variable "cache_control_max_age" {
-  default = "24h"
+variable "image_name" {
+  type    = string
+  default = "lawn"
 }
 
 variable "image_tag" {
+  type    = string
   default = "latest"
+}
+
+// cloud run service account
+variable "service_account" {
+  type = string
+}
+
+variable "github_username" {
+  type = string
+}
+
+variable "cache_control_max_age" {
+  type    = string
+  default = "24h"
 }
