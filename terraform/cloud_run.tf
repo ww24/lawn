@@ -44,18 +44,16 @@ resource "google_cloud_run_service" "lawn" {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "1"
       }
+
+      labels = {
+        service = var.name
+      }
     }
   }
 
   traffic {
     percent         = 100
     latest_revision = true
-  }
-
-  lifecycle {
-    ignore_changes = [
-
-    ]
   }
 }
 
