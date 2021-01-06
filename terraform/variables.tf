@@ -43,5 +43,5 @@ variable "github_username" {
 
 variable "cache_control_max_age" {
   type    = string
-  default = "24h"
+  default = "6h"
 }
