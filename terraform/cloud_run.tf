@@ -55,6 +55,8 @@ resource "google_cloud_run_service" "lawn" {
     percent         = 100
     latest_revision = true
   }
+
+  autogenerate_revision_name = true
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {
