@@ -134,4 +134,4 @@ jobs:
         run: terraform plan -no-color
       - name: Apply
         if: github.event_name == 'push'
-        run: terraform plan -no-color
+        run: terraform apply -no-color
